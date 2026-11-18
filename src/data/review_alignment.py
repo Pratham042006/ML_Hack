@@ -10,6 +10,7 @@ from pathlib import Path
 import numpy as np
 
 from src.data.alignment import AlignmentConfig, align_reference, assess_candidate_coverage
+from src.data.align_trips import _sha256
 from src.data.pipeline import generate_candidates, load_trip, _point_segment_distances, _project_local
 
 
@@ -19,7 +20,7 @@ def _reference_breaks(trip):
             if arcs[route[position - 1]][1] != arcs[route[position]][0]]
 
 
-def section_evidence(trip):
+def section_evidence(trip, *, ledger_path=None, source_provenance=None):
     """Check whether continuous reference sections have distinct ordered GPS anchors."""
     route = trip["reference_route"]
     breaks = _reference_breaks(trip)
@@ -46,7 +47,9 @@ def section_evidence(trip):
         for position, before, after in zip(breaks, anchors, anchors[1:])
     ]
     experiments = []
-    if all(window["ordered_nonoverlapping_anchors"] for window in splits):
+    assigned = {}
+    bounds_are_ordered = all(window["ordered_nonoverlapping_anchors"] for window in splits)
+    if bounds_are_ordered:
         candidates = generate_candidates(trip)
         for (a, b), indices in zip(sections, anchors):
             # Restrict experiments to uniquely anchored observation bounds. The
@@ -54,9 +57,34 @@ def section_evidence(trip):
             subset = [o for o in observations if indices[0] <= o["observation_index"] <= indices[-1]]
             trial = {**trip, "reference_route": route[a:b], "observations": subset}
             coverage = assess_candidate_coverage(align_reference(trial), candidates)
+            for label in coverage["labels"]:
+                local_position = label["route_position"]
+                assigned[label["observation_index"]] = {
+                    **label,
+                    "route_position": a + local_position if local_position is not None else None,
+                    "section_start": a, "section_end_exclusive": b,
+                }
             experiments.append({"position_start": a, "position_end_exclusive": b,
                                 "first_observation": indices[0], "last_observation": indices[-1],
                                 "counts": coverage["counts"]})
+    excluded_reason = "outside_section_anchor_windows" if bounds_are_ordered else "unresolved_section_anchors"
+    summary = Counter(label["status"] for label in assigned.values())
+    summary["excluded"] = len(observations) - len(assigned)
+    if ledger_path is not None:
+        ledger_path.parent.mkdir(parents=True, exist_ok=True)
+        with ledger_path.open("w", encoding="utf-8") as stream:
+            for observation in observations:
+                index = observation["observation_index"]
+                record = assigned.get(index, {"observation_index": index, "status": "excluded",
+                                             "reasons": [excluded_reason], "route_position": None,
+                                             "arc_id": None, "candidate_miss": None})
+                if index in assigned:
+                    record = {**record, "plausible_route_positions": [
+                        record["section_start"] + position
+                        for position in record["plausible_route_positions"]]}
+                stream.write(json.dumps({**record, "trip_id": trip["trip_id"],
+                                         "experimental_method": "ordered-anchor-sections-v1",
+                                         "training_eligible": False}, allow_nan=False) + "\n")
     return {
         "break_positions": breaks,
         "sections": [
@@ -68,8 +96,19 @@ def section_evidence(trip):
         "split_windows": splits,
         "anchor_rule": "Nearest section within 50m and at least 20m nearer than the runner-up",
         "experimental_section_counts": experiments,
-        "experimental_observations_outside_section_windows": len(observations) - sum(
-            trial["counts"]["total_observations"] for trial in experiments),
+        "experimental_observations_outside_section_windows": summary["excluded"],
+        "experimental_status_counts": {status: summary[status] for status in
+                                       ("confident", "ambiguous", "unavailable", "excluded")},
+        "experimental_miss_denominator": summary["confident"],
+        "experimental_candidate_misses": sum(label["candidate_miss"] is True
+                                             for label in assigned.values()),
+        "section_ledger": str(ledger_path) if ledger_path is not None else None,
+        "experimental_provenance": {
+            "method": "ordered-anchor-sections-v1", "verified_ground_truth": False,
+            "alignment_config": vars(AlignmentConfig()), "anchor_max_m": 50,
+            "anchor_margin_m": 20, "excluded_reason": excluded_reason if summary["excluded"] else None,
+            "source": source_provenance,
+        },
     }
 
 
@@ -177,6 +216,8 @@ def _write_map(path, trip, label, nearby):
 
 def review(training_root, prepared_dir, output_dir, *, all_sections=False, uncertainty_trips=()):
     root, prepared, output = map(Path, (training_root, prepared_dir, output_dir))
+    if output.resolve().is_relative_to(prepared.resolve()) or output.resolve().is_relative_to(root.resolve()):
+        raise ValueError("Write experimental outputs outside the prepared dataset and raw training directories")
     output.mkdir(parents=True, exist_ok=True)
     manifest = json.loads((prepared / "manifest.json").read_text(encoding="utf-8"))
     if manifest["partition"] != "training":
@@ -192,13 +233,24 @@ def review(training_root, prepared_dir, output_dir, *, all_sections=False, uncer
         if not {"disconnected_or_direction_inconsistent_reference", "alignment_resource_limit"
                 }.intersection(summary["reason_counts"]):
             continue
+        input_hashes = {
+            suffix: _sha256(root / trip_id / f"{trip_id}.{suffix}")
+            for suffix in summary["input_sha256"]
+        }
+        if input_hashes != summary["input_sha256"]:
+            raise ValueError(f"Trip {trip_id} inputs differ from the preparation manifest")
         trip = load_trip(root / trip_id, include_reference=True)
         breaks = _reference_breaks(trip)
         if breaks:
             by_reason["disconnected_trips"] += 1
             report["disconnected_references"][trip_id] = {"break_positions": breaks}
             if all_sections or trip_id == "00000002":
-                report["disconnected_references"][trip_id] = section_evidence(trip)
+                ledger_path = output / "section-ledgers" / f"{trip_id}.jsonl" if all_sections else None
+                report["disconnected_references"][trip_id] = section_evidence(
+                    trip, ledger_path=ledger_path,
+                    source_provenance={"dataset_sha256": manifest["dataset_sha256"],
+                                       "input_sha256": input_hashes,
+                                       "candidate_policy": manifest["method"]["candidate_policy"]})
     report["disconnected_trip_count"] = by_reason["disconnected_trips"]
     report["distant_alignment_diagnostics"] = {}
     training_ids = {trip["trip_id"] for trip in manifest["trips"] if trip["status"] != "failed"}

@@ -33,7 +33,7 @@ Use a new output directory for these results.
 
 ```powershell
 $dataRoot = "C:\Users\suhaas\Downloads\Student folder\Student folder"
-python -m src.data.review_alignment (Join-Path $dataRoot train) outputs/review2-v1/training outputs/alignment-followup/full --all-sections --uncertainty-trip 00000054 --uncertainty-trip 00000066 --uncertainty-trip 00000081
+python -m src.data.review_alignment (Join-Path $dataRoot train) outputs/review2-v1/training outputs/alignment-followup/section-ledgers-v1 --all-sections --uncertainty-trip 00000054 --uncertainty-trip 00000066 --uncertainty-trip 00000081
 ```
 
 - Eight of ten disconnected training routes had ordered, nonoverlapping GPS
@@ -51,10 +51,21 @@ python -m src.data.review_alignment (Join-Path $dataRoot train) outputs/review2-
   misses against the same 50 m candidate generator. Keep the cutoff fixed
   for the frozen snapshot.
 
-The section experiment treats every break as a boundary and only fits within
-the observed anchor windows. Its counts are dependent on heuristic anchor
-and label rules. The generated report is separate from both snapshots and
-contains no training export.
+The ten trips account for 35,775 GPS observations: 10,041 confident inferred
+labels, 14,390 ambiguous, 5 unavailable within fitted windows and 11,339
+excluded from the trial. Candidate misses are measured against all 10,041
+confident inferred labels. The experiment treats each directed break as a
+boundary and only fits within GPS windows with ordered, nonoverlapping anchors.
+An anchor must be within 50 m of its nearest section and at least 20 m closer
+to that section than the next closest one. All sections need anchors.
+
+`section-ledgers/<trip_id>.jsonl` contains one record per observation, with
+full-route occurrence position, reason codes, and candidate-miss status where
+defined. Excluded observations have no arc or miss flag. The report records
+input hashes checked against the preparation manifest, the alignment and anchor
+settings, and the miss denominator. The section fits use reference geometry
+and observations. Candidate membership is assessed after each fit. Treat
+all outputs as exploratory and keep them separate from the frozen datasets.
 
 ## Proposal for Adithya
 
@@ -71,6 +82,25 @@ For a transition across distinct arcs, the fraction lets you use
 observations on the same directed arc, please confirm how you want to handle
 negative progress from GPS jitter. On training trip `00000001`, the median
 position difference from the midpoint was 21.2 m across 8,697 candidates.
-The next check is to compare routing choices and resets on the same trips
-under both approaches. Agree on the field, fallback and backwards-jitter
-rule with Pratham and Prithika before any contract update.
+For an initial decoder comparison, propose treating a backwards displacement
+of up to 5 m as zero progress for adjacent observations on the same directed
+arc, within a positive time gap of up to 10 s. For larger negative
+displacements, use the decoder's normal directed reachability or reset logic.
+Use the midpoint fallback if either position is missing. The reverse arc is
+a separate candidate and uses the complementary fraction for the same point.
+
+```powershell
+$train = Join-Path $dataRoot train
+python -m src.data.projection_probe (Join-Path $train 00000001) (Join-Path $train 00000002) (Join-Path $train 00000003) (Join-Path $train 00000054) --jitter-m 5 --max-gap-seconds 10
+python -m unittest discover -s src/data
+```
+
+The first sample is observation 0, arc 64973, fraction 0.10978 on trip
+`00000001`. The probe uses the nearest inference candidate per observation
+and reads GPS and network files only. Across these four trips, 8,230 consecutive
+pairs kept the same nearest directed arc and had positions and a valid time gap.
+Of those, 1,884 went backward by up to 5 m and 1,218 by more than 5 m. These
+measurements include possible nearest-road errors and actual movement. Use 5 m
+as an experimental threshold for comparing decoder choices and resets. Agree
+on the field and fallback behavior with Adithya, Pratham and Prithika before
+any contract update.

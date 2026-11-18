@@ -309,13 +309,21 @@ def _transition_log_probability(
     observation: dict[str, Any],
     delta_seconds: float,
     max_speed_mps: float,
+    travel_distance=None,
 ) -> float:
     max_travel_m = max_speed_mps * delta_seconds
     # Allow for rounding in the bound; the original speed check is authoritative.
     search_limit_m = max_travel_m + max(1.0, max_travel_m) * 1e-12
-    network_distance = graph.candidate_travel_distance_m(
-        previous_candidate["arc_id"], candidate["arc_id"], limit_m=search_limit_m
-    )
+    if travel_distance is None:
+        network_distance = graph.candidate_travel_distance_m(
+            previous_candidate["arc_id"], candidate["arc_id"], limit_m=search_limit_m
+        )
+    else:
+        network_distance = travel_distance(
+            graph, previous_observation["observation_index"], previous_candidate["arc_id"],
+            observation["observation_index"], candidate["arc_id"],
+            delta_seconds=delta_seconds, limit_m=search_limit_m,
+        )
     if not math.isfinite(network_distance):
         return -math.inf
     if delta_seconds > 0.0 and network_distance / delta_seconds > max_speed_mps:
@@ -338,7 +346,17 @@ def decode_with_diagnostics(
     max_speed_mps: float = DEFAULT_MAX_SPEED_MPS,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Run Viterbi decoding and return explicit route-break diagnostics."""
+    return _decode_with_diagnostics(
+        observations, scored_candidates, network,
+        max_gap_seconds=max_gap_seconds, max_speed_mps=max_speed_mps,
+    )
 
+
+def _decode_with_diagnostics(
+    observations, scored_candidates, network, *,
+    max_gap_seconds=DEFAULT_MAX_GAP_SECONDS, max_speed_mps=DEFAULT_MAX_SPEED_MPS,
+    travel_distance=None,
+):
     max_gap_seconds = _finite_number(max_gap_seconds, "max_gap_seconds")
     max_speed_mps = _finite_number(max_speed_mps, "max_speed_mps")
     if max_gap_seconds <= 0.0 or max_speed_mps <= 0.0:
@@ -443,6 +461,7 @@ def decode_with_diagnostics(
                     observations[position],
                     delta_seconds,
                     max_speed_mps,
+                    travel_distance,
                 )
                 score = previous_scores[previous_index] + transition
                 if score > best_score:

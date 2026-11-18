@@ -1,11 +1,11 @@
-"""Compare adjacent matches under the decoder's directed midpoint policy."""
+"""Compare adjacent matches under a shared directed distance policy."""
 
 import math
 
 from src.routing.decoder import DEFAULT_MAX_GAP_SECONDS, DEFAULT_MAX_SPEED_MPS
 
 
-def audit_continuity(observations, predictions, graph):
+def audit_continuity(observations, predictions, graph, *, travel_distance=None):
     """Return mutually exclusive pair counts and pair details keyed by destination."""
     counts = dict.fromkeys(
         ("unmatched_endpoint", "nonpositive_timestamp", "large_gap",
@@ -25,7 +25,14 @@ def audit_continuity(observations, predictions, graph):
         elif delta > DEFAULT_MAX_GAP_SECONDS:
             status = "large_gap"
         else:
-            travel = graph.candidate_travel_distance_m(first_arc, second_arc)
+            if travel_distance is None:
+                travel = graph.candidate_travel_distance_m(first_arc, second_arc)
+            else:
+                travel = travel_distance(
+                    graph, previous["observation_index"], first_arc,
+                    current["observation_index"], second_arc,
+                    delta_seconds=delta,
+                )
             if not math.isfinite(travel):
                 status = "disconnected"
             else:

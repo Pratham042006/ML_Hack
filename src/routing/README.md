@@ -112,3 +112,6 @@ straight-line GPS displacement, and rejects implausible speed. The decoder bound
 shortest-path searches by the existing speed cap times elapsed time. The separate
 continuity audit uses unrestricted paths so it can distinguish a disconnected pair
 from a reachable pair whose estimated trip is too fast.
+
+See the [projection comparison](PROJECTION_COMPARISON.md) for the opt-in
+position-aware prototype, four-trip comparison, and map handoff.

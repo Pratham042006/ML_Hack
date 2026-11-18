@@ -46,12 +46,25 @@ speed exceeds 60 m/s. Unmatched endpoints and excluded timestamp intervals have
 separate counts. Failed-transition resets include candidates disconnected by
 the graph or rejected by the speed cap.
 
-On trip 00000005, at observation 1, Viterbi chose arc 173 (10.89 m from GPS)
-over arc 176 (7.14 m). The classifier's outgoing transition required 487.41 m
-in one second under the midpoint model. Viterbi stayed on the same arc. At
-observation 25, Viterbi's choice was farther from GPS (27.47 m vs 11.10 m) and
-moved a 536.91 m midpoint jump from the incoming to the outgoing pair. This
-illustrates why a locally plausible choice can still leave a route break.
+Two cases on training trip 00000005 illustrate why a better continuity count
+can conceal poor choices. These are local checks on GPS and road geometry
+without reference labels. The projected distances below are diagnostic
+calculations and were never used for decoding.
+
+- **Observation 1.** The baseline picked arc 176 (7.14 m from GPS), then
+  moved onto arc 173 at observation 2. These arcs meet at node 140 and point
+  southwest, consistent with the GPS heading of 240°. Their midpoint
+  distance is 487.41 m, but the GPS projects near the end of 176 and the start
+  of 173, about 16.4 m apart along the roads. The GPS itself moved 16.8 m.
+  Viterbi picked arc 173 early (10.89 m from GPS), avoiding the penalty by
+  staying on that arc. The baseline transition looks physically plausible.
+- **Observation 25.** Arc 173 ends at node 139, where arc 172 starts.
+  The GPS moved 33.5 m with a heading of 239°, close to the arcs' 223°
+  bearing. The baseline's move from 173 to 172 covers about 32.2 m using
+  the projected positions, versus 536.91 m with midpoints. Viterbi stayed
+  on 173 at observation 25, where it was farther from GPS (27.47 m vs
+  11.10 m), then reset at 26. The decoder delayed the transition by one
+  observation and still created a block break.
 
 ## Offline proxy agreement
 
@@ -88,8 +101,13 @@ and diagnostic equality against unbounded search was checked on trips 00000002,
 Prithika can call `decode_with_diagnostics(observations, scored_candidates,
 network)` to obtain `(predictions, events)` in one pass. The demo emits these
 events under `diagnostics.events`. Each event carries `observation_index`
-and `event`; timestamp resets also carry `delta_seconds`. Proposed rendering
-after the API schema is agreed:
+and `event`; timestamp resets also carry `delta_seconds`.
+`src.routing.map_diagnostics.matched_blocks(predictions, events)` returns
+inclusive first and last observation indices, a matched count and a
+`break_before` reason per block. The demo exposes it as
+`diagnostics.matched_blocks`. Use prediction order for the endpoints because
+observation IDs can be nonconsecutive. Proposed rendering after the API schema
+is agreed:
 
 - Show a break before the affected observation for `large_gap_reset`,
   `nonpositive_timestamp_reset` and `unreachable_transition_reset`.
@@ -100,11 +118,24 @@ after the API schema is agreed:
   per-observation segments. An expanded road path would also need the
   intermediate arcs between matches. Keep references in offline evaluation.
 
-For Suhaas, the proposed position is a fraction in [0, 1] measured in the
-direction of the candidate arc, from its start node to its end node. For
+The demo reported 156, 61, 90 and 23 matched blocks on trips 00000001,
+00000002, 00000005 and 00000052, respectively. Each trip's block counts sum
+to its matched observation count.
+
+Suhaas's proposal on `suhaas/data` at `d20242a` puts
+`projection_fraction` on the candidate beside `features`. It is a clamped
+orthogonal projection in the candidate generator's metric plane, measured
+from the directed start node (0) to the directed end node (1). A reversed
+nondegenerate arc uses 1 − f. A zero-length arc carries null.
+
+Routing proposes using the midpoint rule for the whole transition if either
+candidate omits the field or carries null. Reject other invalid values, and
+confirm that the scorer passes this metadata through and keeps the snapshot's
+feature list at `distance_m`. For
 different arcs, use the remaining fraction of the previous arc, the directed
 node-to-node path, and the prefix fraction of the next arc. For the same arc,
 forward movement uses the fraction difference. Backward movement requires a
-legal return path or an explicit jitter policy. Agree on the field placement,
-degenerate arcs and missing values before changing the contract. Compare on
-fixed candidates with forward/reverse, same-arc and skipped-arc tests.
+legal return path or an explicit jitter policy. Ask Suhaas, Pratham and
+Prithika to confirm the proposal and the backward-jitter policy before
+changing the contract. Compare on fixed candidates with forward/reverse,
+same-arc and skipped-arc tests. This proposal is pending team agreement.

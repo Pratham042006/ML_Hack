@@ -21,6 +21,7 @@ from typing import Any
 from src.data.pipeline import generate_candidates, load_trip
 from src.models.inference import score_candidates
 from src.routing.continuity import audit_continuity
+from src.routing.map_diagnostics import matched_blocks
 from src.routing.decoder import (
     DEFAULT_MAX_GAP_SECONDS,
     DEFAULT_MAX_SPEED_MPS,
@@ -241,6 +242,10 @@ def build_integration_report(
             "total_diagnostic_events": len(diagnostics),
             "event_breakdown": event_counts,
             "events": diagnostics,
+            "matched_blocks": (
+                matched_blocks(predictions, diagnostics)
+                if validation_results["all_checks_passed"] else []
+            ),
         },
         "continuity": continuity,
     }

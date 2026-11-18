@@ -126,9 +126,10 @@ roads bidirectional. No intermediate path is reconstructed here.
 
 Prithika can pass unchanged observations/network through integration, including
 unmatched observations. See `LABEL_ALIGNMENT.md` for the separate reference
-investigation and evaluation-denominator rules. No training-label CSV is
-produced without a defensible alignment and provenance.
+investigation and evaluation-denominator rules. The separate approximate aligner
+now exports qualified labels and an optional training CSV with provenance;
+labels never enter inference. Details and counts are in `LABEL_ALIGNMENT.md`.
 
 Remaining data work: validate remaining permitted training trips, inspect
 connectivity/EDA, investigate candidate radius/coverage and projection error,
-and resolve or qualify reference alignment. No claim of full-dataset readiness.
+and validate/refine approximate reference alignment. No claim of full-dataset readiness.

@@ -1,0 +1,39 @@
+{
+  "scope": "previously inspected student-test; approximate inferred labels, not verified accuracy",
+  "models": {
+    "untuned": {
+      "classifier_only": {
+        "agreements": 7697,
+        "denominator": 9118,
+        "rate": 0.8441544198289098
+      },
+      "midpoint": {
+        "agreements": 6724,
+        "denominator": 9118,
+        "rate": 0.7374424215836807
+      },
+      "projected": {
+        "agreements": 7846,
+        "denominator": 9118,
+        "rate": 0.8604957227462163
+      }
+    },
+    "tuned": {
+      "classifier_only": {
+        "agreements": 7721,
+        "denominator": 9118,
+        "rate": 0.8467865760035096
+      },
+      "midpoint": {
+        "agreements": 6749,
+        "denominator": 9118,
+        "rate": 0.740184250932222
+      },
+      "projected": {
+        "agreements": 7844,
+        "denominator": 9118,
+        "rate": 0.860276376398333
+      }
+    }
+  }
+}

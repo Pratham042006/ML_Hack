@@ -1,6 +1,6 @@
 # Pratham's candidate-scoring component
 
-Status: **integration baseline and conditional experiment framework**. No real-data model has been trained or evaluated here. The training label alignment to `.route` remains unresolved and must be agreed with the team/organizers. Synthetic runs verify code only and are not project results.
+Status: **integration baseline, five-model proxy comparison, and preliminary Bayesian tuning**. Real training-trip experiments use approximate inferred labels, not verified ground truth. See `EXPERIMENT_RESULTS.md` for measured results and limitations. Synthetic runs verify code only and are not project results.
 
 ## Inference handoff
 
@@ -38,3 +38,7 @@ Do not report the fixture's metrics as actual performance. With valid real train
 - Extend evaluation to count candidate misses and unlabeled observations, use the student-test partition appropriately and compute sequence metrics with Adithya.
 - Implement a recorded Bayesian search after actual model comparison; save trials and compare tuned with untuned models.
 - Coordinate dependencies and trained artifact location with Prithika. The starter root requirements already include numpy, pandas and scikit-learn (which depends on joblib).
+
+## Real preliminary results and tuning
+
+The first-review local run trained all five classifiers on approximate training-trip labels. Subsequent nested Bayesian tuning of GaussianNB has also been run. See `src/models/EXPERIMENT_RESULTS.md` for measured results, denominators, limitations and reproducibility commands. These results remain provisional and are not verified ground-truth accuracy.

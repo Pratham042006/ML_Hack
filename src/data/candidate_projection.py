@@ -1,5 +1,7 @@
 """Opt-in directed candidate positions for routing experiments."""
 
+from __future__ import annotations
+
 import numpy as np
 
 from src.data.pipeline import _project_local

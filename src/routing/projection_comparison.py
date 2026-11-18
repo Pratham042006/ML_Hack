@@ -9,11 +9,11 @@ from time import perf_counter
 
 from src.data.alignment import align_reference, assess_candidate_coverage
 from src.data.pipeline import generate_candidates, load_trip
-from src.models.inference import score_candidates
+from src.models.inference import _load_artifact, score_candidates
 from src.routing.continuity import audit_continuity
 from src.routing.decoder import (
     DEFAULT_MAX_GAP_SECONDS, DEFAULT_MAX_SPEED_MPS,
-    DirectedRoadGraph, decode_classifier_only, decode_with_diagnostics,
+    DirectedRoadGraph, _haversine_m, decode_classifier_only, decode_with_diagnostics,
 )
 from src.routing.integration_demo import validate_pipeline_outputs
 from src.routing.map_diagnostics import matched_blocks
@@ -27,6 +27,7 @@ from src.routing.proxy_evaluation import summarize_proxy
 def compare_trip(
     path, *, with_proxy=False, model_artifact=None,
     candidate_generator=generate_candidates, position_provider=candidate_fractions,
+    expected_artifact_sha256=None, expected_training_sha256=None,
 ):
     """Compare scores on shared candidates, with optional teammate providers."""
     path = Path(path)
@@ -35,14 +36,19 @@ def compare_trip(
     artifact_path = Path(model_artifact) if model_artifact is not None else None
     if artifact_path is not None and not artifact_path.is_file():
         raise ValueError(f"model artifact is not a file: {artifact_path}")
+    artifact = None
+    if artifact_path is not None:
+        started = perf_counter()
+        artifact_hash, artifact = load_evaluation_artifact(
+            artifact_path, expected_artifact_sha256, expected_training_sha256,
+        )
+        artifact_load_seconds = perf_counter() - started
 
     started = perf_counter()
     trip = load_trip(path, include_reference=False)
     observations, network = trip["observations"], trip["network"]
     candidates = candidate_generator(trip)
-    if artifact_path is not None:
-        from src.models.inference import _load_artifact
-        artifact = _load_artifact(artifact_path)
+    if artifact is not None:
         if "heading_agreement" in artifact["feature_names"]:
             from src.data.heading import add_heading_features
             candidates = add_heading_features(trip, candidates)
@@ -59,6 +65,9 @@ def compare_trip(
         "trip_id": trip["trip_id"],
         "observations": len(observations),
         "candidates": len(candidates),
+        "observations_without_candidates": len(observations) - len({
+            candidate["observation_index"] for candidate in candidates
+        }),
         "scorer": "distance baseline",
         "null_projections": sum(f is None for f in fractions.values()),
         "backward_jitter_metres": BACKWARD_JITTER_M,
@@ -70,14 +79,9 @@ def compare_trip(
         **baseline,
     }
     trained_predictions = None
-    if artifact_path is not None:
-        with artifact_path.open("rb") as stream:
-            digest = sha256()
-            for block in iter(lambda: stream.read(1024 * 1024), b""):
-                digest.update(block)
-            artifact_hash = digest.hexdigest()
+    if artifact is not None:
         started = perf_counter()
-        artifact_scored = score_candidates(candidates, model_artifact=artifact_path)
+        artifact_scored = score_candidates(candidates, model_artifact=artifact)
         artifact_seconds = perf_counter() - started
         trained, trained_predictions = _run_decoders(
             trip, candidates, artifact_scored, distance, graph,
@@ -85,7 +89,11 @@ def compare_trip(
         report["model_comparison"] = {
             "artifact_filename": artifact_path.name,
             "artifact_sha256": artifact_hash,
-            "score_seconds_including_artifact_load": round(artifact_seconds, 4),
+            "training_csv_sha256": artifact.get("training_csv_sha256"),
+            "model_name": artifact.get("model_name"),
+            "feature_names": artifact["feature_names"],
+            "artifact_load_and_verification_seconds": round(artifact_load_seconds, 4),
+            "score_seconds": round(artifact_seconds, 4),
             **trained,
             "changed_matches_vs_distance_baseline": {
                 name: sum(a["arc_id"] != b["arc_id"] for a, b in zip(
@@ -116,6 +124,24 @@ def compare_trip(
                 for name, predictions in trained_predictions.items()
             }
     return report
+
+
+def load_evaluation_artifact(path, expected_artifact_sha256=None, expected_training_sha256=None):
+    """Check the requested artifact digest before loading a trusted joblib file."""
+    with path.open("rb") as stream:
+        digest = sha256()
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+        artifact_hash = digest.hexdigest()
+    if expected_artifact_sha256 is not None and artifact_hash != expected_artifact_sha256.lower():
+        raise ValueError("artifact does not match the expected SHA-256")
+    artifact = _load_artifact(path)
+    if expected_training_sha256 is not None:
+        if artifact.get("training_csv_sha256") != expected_training_sha256.lower():
+            raise ValueError("artifact training CSV does not match the expected SHA-256")
+        if "heading_agreement" not in artifact["feature_names"]:
+            raise ValueError("held-out comparison requires a heading artifact")
+    return artifact_hash, artifact
 
 
 def _run_decoders(trip, candidates, scored, distance, graph):
@@ -191,12 +217,25 @@ def _compare_pairs(trip, predictions, details, scored, fractions):
         targets = [name for name in targets if len(examples[name]) < 3]
         if not targets:
             continue
-        example = {"from_observation_index": previous_index, "to_observation_index": index}
+        previous = observations[position - 1]
+        gps_step = _haversine_m(
+            (previous["longitude"], previous["latitude"]),
+            (observation["longitude"], observation["latitude"]),
+        )
+        example = {
+            "from_observation_index": previous_index,
+            "to_observation_index": index,
+            "gps_step_m": round(gps_step, 2),
+        }
         for name, records in predictions.items():
             first, second = records[position - 1]["arc_id"], records[position]["arc_id"]
             selected = ((previous_index, first), (index, second))
             example[name] = {
                 "arc_ids": [first, second],
+                "directed_nodes": [
+                    trip["network"]["arcs"][arc] if arc is not None else None
+                    for arc in (first, second)
+                ],
                 "projection_fractions": [fractions.get(key) for key in selected],
                 "gps_distances_m": [gps_distances.get(key) for key in selected],
                 "midpoint_audit": details[name][0][index],

@@ -1,11 +1,11 @@
 """Prepare decoding-block boundaries for consumers of routing diagnostics."""
 
 
-_RESETS = {
+RESET_EVENTS = frozenset({
     "large_gap_reset",
     "nonpositive_timestamp_reset",
     "unreachable_transition_reset",
-}
+})
 
 
 def matched_blocks(predictions, events):
@@ -15,7 +15,7 @@ def matched_blocks(predictions, events):
     """
     resets = {
         event["observation_index"]: event["event"]
-        for event in events if event["event"] in _RESETS
+        for event in events if event["event"] in RESET_EVENTS
     }
     blocks = []
     block = None

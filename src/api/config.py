@@ -29,3 +29,5 @@ PORT = int(os.getenv("PATHSNAP_API_PORT", "8000"))
 
 # Allowed browser origins for the UI. "*" is fine for a closed two-laptop demo.
 CORS_ORIGINS = _csv(os.getenv("PATHSNAP_CORS_ORIGINS", "*"))
+
+DECODER = os.getenv("PATHSNAP_DECODER", "midpoint").strip().lower()

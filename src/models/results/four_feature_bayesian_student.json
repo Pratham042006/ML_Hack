@@ -1,0 +1,35 @@
+{
+  "scope": "student-test development; inferred labels, not verified accuracy",
+  "coverage": {
+    "total_observations": 19160,
+    "confident": 9118,
+    "ambiguous": 8529,
+    "unavailable": 1513,
+    "candidate_misses": 16,
+    "candidate_miss_denominator": 9118,
+    "no_candidates_all_observations": 0,
+    "training_eligible": 9102
+  },
+  "models": {
+    "untuned": {
+      "correct": 7697,
+      "confident": 9118,
+      "eligible": 9102,
+      "seconds": 0.5322062090000008,
+      "top1_including_misses": 0.8441544198289098,
+      "candidate_macro_f1": 0.8993719129085578,
+      "candidate_binary_log_loss": 0.16927429610419664,
+      "artifact_sha256": "e5c42d59d60ddebfa459972acea54446a1d2128273ba4c67e44d19f1889b4291"
+    },
+    "tuned": {
+      "correct": 7721,
+      "confident": 9118,
+      "eligible": 9102,
+      "seconds": 0.4401742919999998,
+      "top1_including_misses": 0.8467865760035096,
+      "candidate_macro_f1": 0.8984358325179018,
+      "candidate_binary_log_loss": 0.16988276522603335,
+      "artifact_sha256": "99801b674a444bffe04100dab74833e7e6171c05df7e9b31ac3c8317ab0c31ae"
+    }
+  }
+}

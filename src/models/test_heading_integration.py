@@ -9,6 +9,20 @@ from src.models.inference import score_candidates
 
 
 class HeadingIntegrationTests(unittest.TestCase):
+    def test_four_feature_artifact_scores_null_projection(self):
+        model = make_pipeline(SimpleImputer(), LogisticRegression()).fit(
+            [[1., np.nan, 0., np.nan], [3., 1., 2., .5], [1., 1., 0., .2], [4., -1., 3., .8]],
+            [1, 0, 1, 0])
+        artifact = {'format_version': 1,
+                    'feature_names': ['distance_m', 'heading_agreement', 'distance_margin_m', 'projection_fraction'],
+                    'nullable_features': ['heading_agreement', 'projection_fraction'], 'estimator': model}
+        candidates = [{'observation_index': 0, 'arc_id': 0, 'features': {'distance_m': 1., 'heading_agreement': None,
+                         'distance_margin_m': 0., 'projection_fraction': None}, 'geometry': []},
+                      {'observation_index': 0, 'arc_id': 1, 'features': {'distance_m': 3., 'heading_agreement': 1.,
+                         'distance_margin_m': 2., 'projection_fraction': .5}, 'geometry': []}]
+        result = score_candidates(candidates, artifact)
+        self.assertAlmostEqual(sum(item['score'] for item in result), 1.)
+
     def test_missing_and_present_heading_score_with_fold_fitted_imputer(self):
         trip = {'observations': [{'observation_index': 0, 'longitude': 0., 'latitude': 0., 'timestamp': 1.},
                                  {'observation_index': 1, 'longitude': .001, 'latitude': 0., 'timestamp': 2.}],

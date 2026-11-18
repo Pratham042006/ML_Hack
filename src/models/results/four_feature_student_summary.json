@@ -1,0 +1,149 @@
+{
+  "scope": "student-test development comparison; inferred reference labels, not verified accuracy",
+  "training_csv_sha256": "7144c29378ad2551474d5c5670abde961c1e28ffd5ce98fe6295f7a236b6fbf0",
+  "student_dataset_sha256": "f267ab7a04611834e01dc65d0de9c6cd1eb161243347bf579b49ecda28bf3e5c",
+  "coverage": {
+    "total_observations": 19160,
+    "confident": 9118,
+    "ambiguous": 8529,
+    "unavailable": 1513,
+    "candidate_misses": 16,
+    "candidate_miss_denominator": 9118,
+    "no_candidates_all_observations": 0,
+    "training_eligible": 9102
+  },
+  "training_artifacts": {
+    "logistic_regression": {
+      "sha256": "b9c8afe8845d9405629ea1b55f1f6bc5de1fb2704255575b61045c9c400d6d29",
+      "training_seconds": 0.45339116699999993
+    },
+    "gaussian_naive_bayes": {
+      "sha256": "d597481a29931739ebc9f96e154f7751760490c3ce289e66463e99ee019a9424",
+      "training_seconds": 0.08183004199999999
+    },
+    "decision_tree": {
+      "sha256": "95bf5291d1cdb8cde37ae7d4767d4ab6465d9f95140e2da95d51313108945b5e",
+      "training_seconds": 1.9024
+    },
+    "random_forest": {
+      "sha256": "3fe50a52d56f6166b320fd27c6202d6f18779093fc20a0a3d7758fd7fe87d7d1",
+      "training_seconds": 9.785012834
+    },
+    "hist_gradient_boosting": {
+      "sha256": "8a71d7f53ea05cca66a6d01a91c02d78bf1bb5e92bfb3adf902881838ed6d785",
+      "training_seconds": 2.6598409579999984
+    }
+  },
+  "models": {
+    "logistic_regression": {
+      "correct": 7723,
+      "confident": 9118,
+      "eligible": 9102,
+      "prediction_seconds": 0.027941375999997575,
+      "top1_including_misses": 0.8470059223513928,
+      "conditional_top1": 0.8484948362997143,
+      "candidate_macro_f1": 0.8824546096903736,
+      "candidate_positive_precision": 0.8040067839728641,
+      "candidate_positive_recall": 0.8333333333333334,
+      "candidate_confusion_matrix": [
+        [
+          29776,
+          1849
+        ],
+        [
+          1517,
+          7585
+        ]
+      ],
+      "candidate_binary_log_loss": 0.19850264986590235
+    },
+    "gaussian_naive_bayes": {
+      "correct": 7739,
+      "confident": 9118,
+      "eligible": 9102,
+      "prediction_seconds": 0.028805581999996832,
+      "top1_including_misses": 0.8487606931344593,
+      "conditional_top1": 0.8502526917161064,
+      "candidate_macro_f1": 0.7926393951420981,
+      "candidate_positive_precision": 0.5723051748823891,
+      "candidate_positive_recall": 0.9222148978246539,
+      "candidate_confusion_matrix": [
+        [
+          25352,
+          6273
+        ],
+        [
+          708,
+          8394
+        ]
+      ],
+      "candidate_binary_log_loss": 0.38646681800837174
+    },
+    "decision_tree": {
+      "correct": 7694,
+      "confident": 9118,
+      "eligible": 9102,
+      "prediction_seconds": 0.016634709000005188,
+      "top1_including_misses": 0.8438254003070849,
+      "conditional_top1": 0.8453087233575038,
+      "candidate_macro_f1": 0.898540577160108,
+      "candidate_positive_precision": 0.8041298520798174,
+      "candidate_positive_recall": 0.8899143045484509,
+      "candidate_confusion_matrix": [
+        [
+          29652,
+          1973
+        ],
+        [
+          1002,
+          8100
+        ]
+      ],
+      "candidate_binary_log_loss": 0.18291883900385777
+    },
+    "random_forest": {
+      "correct": 7709,
+      "confident": 9118,
+      "eligible": 9102,
+      "prediction_seconds": 0.29186108200000405,
+      "top1_including_misses": 0.8454704979162097,
+      "conditional_top1": 0.8469567128103713,
+      "candidate_macro_f1": 0.8993061138832825,
+      "candidate_positive_precision": 0.8188562596599691,
+      "candidate_positive_recall": 0.8731048121292023,
+      "candidate_confusion_matrix": [
+        [
+          29867,
+          1758
+        ],
+        [
+          1155,
+          7947
+        ]
+      ],
+      "candidate_binary_log_loss": 0.16943215271353076
+    },
+    "hist_gradient_boosting": {
+      "correct": 7697,
+      "confident": 9118,
+      "eligible": 9102,
+      "prediction_seconds": 0.46354716599999435,
+      "top1_including_misses": 0.8441544198289098,
+      "conditional_top1": 0.8456383212480774,
+      "candidate_macro_f1": 0.8993719129085578,
+      "candidate_positive_precision": 0.8207703458272935,
+      "candidate_positive_recall": 0.8709074928587124,
+      "candidate_confusion_matrix": [
+        [
+          29894,
+          1731
+        ],
+        [
+          1175,
+          7927
+        ]
+      ],
+      "candidate_binary_log_loss": 0.16927429610419664
+    }
+  }
+}

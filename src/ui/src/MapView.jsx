@@ -73,15 +73,27 @@ export default function MapView({ result }) {
         .addTo(unmatched);
     });
 
+    // Draw reset markers; matched road geometries remain separate segments.
+    const resets = L.layerGroup();
+    const byIndex = new Map(observations.map((o) => [o.observation_index, o]));
+    (result.diagnostics?.events || []).filter((e) => e.event.endsWith("_reset")).forEach((event) => {
+      const o = byIndex.get(event.observation_index);
+      if (!o) return;
+      L.circleMarker([o.latitude, o.longitude], { radius: 7, color: "#7c3aed", weight: 3, fillOpacity: 0.5 })
+        .bindPopup(`Route block reset at GPS #${event.observation_index}: ${event.event}`)
+        .addTo(resets);
+    });
+
     const predictedName = isMock ? "Predicted segments (MOCK, synthetic)" : "Predicted road segments";
-    [trace, gpsPoints, predicted, unmatched].forEach((l) => l.addTo(map));
-    state.group = [trace, gpsPoints, predicted, unmatched];
+    [trace, gpsPoints, predicted, unmatched, resets].forEach((l) => l.addTo(map));
+    state.group = [trace, gpsPoints, predicted, unmatched, resets];
     state.control = L.control
       .layers(null, {
         "GPS trace": trace,
         "GPS observations": gpsPoints,
         [predictedName]: predicted,
         "Unmatched observations": unmatched,
+        "Decoder resets": resets,
       })
       .addTo(map);
 

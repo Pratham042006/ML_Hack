@@ -14,6 +14,7 @@ Settings come from environment variables or a local `.env` (see the root `.env.e
 | `PATHSNAP_DATA_DIR` | `data/student_test` | folder with one sub-folder per trip |
 | `PATHSNAP_MODEL_ARTIFACT` | unset | saved model; unset means baseline scoring |
 | `PATHSNAP_CORS_ORIGINS` | `*` | comma-separated UI origins |
+| `PATHSNAP_DECODER` | `midpoint` | `midpoint` or experimental `projected` Viterbi |
 
 ## Endpoints
 - `GET /trips` -> `{"trip_ids": [...]}` (read from the data dir, never hardcoded)
@@ -24,7 +25,7 @@ Settings come from environment variables or a local `.env` (see the root `.env.e
 - `mock`: any teammate module is missing. GPS points are real, predictions are SYNTHETIC. Not a result.
 - `baseline`: all three modules integrated, no model artifact set.
 - `trained`: all three modules integrated and `PATHSNAP_MODEL_ARTIFACT` points to a real file.
-The API does not verify whether the decoder is real Viterbi; read the routing owner's notes.
+The response includes `decoder` and `diagnostics` with events and matched blocks. Both policies use Viterbi; projected positions use a documented experimental transition approximation.
 
 ## Safety rules enforced in code
 - `.route` is never read here; the loader is always called with `include_reference=False`.
@@ -36,3 +37,7 @@ The API does not verify whether the decoder is real Viterbi; read the routing ow
 ## Integration check
     python -m src.api.integration_check
     python -m src.api.integration_check --api-url http://<laptop1-ip>:8000
+
+## Route diagnostics
+
+`POST /predict` includes `decoder` and `diagnostics.events` / `diagnostics.matched_blocks`. Reset events mark the start of a new decoding block; unmatched observations also separate blocks. Individual returned segment geometries do not include intermediate roads. A model artifact with `heading_config` uses those exact 5 m/10 s settings for heading generation. Legacy heading artifacts without metadata use heading-v1 defaults and return a warning.

@@ -39,3 +39,9 @@ Never return .route or reference labels to the UI.
     scored = score_candidates(cands)
     preds = decode(trip["observations"], scored, trip["network"])
     assert len(preds) == len(trip["observations"])
+
+## Integrated optional features and diagnostics (development)
+
+The original candidate and prediction fields remain valid. When a trusted model artifact declares additional feature names, the API adds the requested context from the current trip before scoring. `heading_agreement` uses the artifact's `heading_config`, or heading-v1 defaults with an explicit warning for legacy artifacts. The optional context generator also supports `distance_margin_m`, `projection_fraction`, `candidate_rank` and `segment_length_m`. `heading_agreement` and `projection_fraction` may be null only when listed in the artifact's `nullable_features`; the estimator must contain its training-fitted imputer. Features are computed without reference routes. The distance baseline continues to require only `distance_m`.
+
+Prediction responses additionally provide `decoder` (`midpoint`, `projected`, or `mock`) and `diagnostics` with `events` and `matched_blocks`. Blocks describe per-observation matches; they are not expanded paths. A reset starts a new block, and an unmatched observation separates blocks. The UI must not infer missing intermediate road geometry. `PATHSNAP_DECODER` selects the decoder, while `PATHSNAP_MODEL_ARTIFACT` selects scoring mode.

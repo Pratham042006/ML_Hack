@@ -1,0 +1,149 @@
+{
+  "scope": "student-test development comparison; inferred reference labels, not verified accuracy",
+  "training_csv_sha256": "e92667ea025e8b1bbb603a9292c05a1507cfe4015ae41b33282912434cf8fc56",
+  "student_dataset_sha256": "f267ab7a04611834e01dc65d0de9c6cd1eb161243347bf579b49ecda28bf3e5c",
+  "coverage": {
+    "total_observations": 19160,
+    "confident": 9118,
+    "ambiguous": 8529,
+    "unavailable": 1513,
+    "candidate_misses": 16,
+    "candidate_miss_denominator": 9118,
+    "no_candidates_all_observations": 0,
+    "training_eligible": 9102
+  },
+  "training_artifacts": {
+    "logistic_regression": {
+      "sha256": "51062c3e5774f0b43520ea855ee81e2d046cc9d2b7f5230b453eba7f46d622d5",
+      "training_seconds": 0.20698129200000004
+    },
+    "gaussian_naive_bayes": {
+      "sha256": "81efd86e4a8aa9dcb074c9d8e8115a00da0fcd9944ea2d7d010f11402ba7416a",
+      "training_seconds": 0.05254941700000004
+    },
+    "decision_tree": {
+      "sha256": "a9215c0f24c50930169a4477e185de80ef2631dfdee4d374115f1ee4dd7dbf07",
+      "training_seconds": 1.117084084
+    },
+    "random_forest": {
+      "sha256": "f1c428836ffd336097b15779f6757cad54b0219893c7a5aa347121b77526b556",
+      "training_seconds": 6.958680041000001
+    },
+    "hist_gradient_boosting": {
+      "sha256": "97cfc8ee14c7cba75ce8f67ec7ce946510f717e88804fc8e470a378d29e0dd08",
+      "training_seconds": 2.1036665830000008
+    }
+  },
+  "models": {
+    "logistic_regression": {
+      "correct": 7595,
+      "confident": 9118,
+      "eligible": 9102,
+      "prediction_seconds": 0.02493696100000342,
+      "top1_including_misses": 0.8329677560868611,
+      "conditional_top1": 0.8344319929685783,
+      "candidate_macro_f1": 0.859684925040006,
+      "candidate_positive_precision": 0.7935608207686203,
+      "candidate_positive_recall": 0.7690617446715008,
+      "candidate_confusion_matrix": [
+        [
+          29804,
+          1821
+        ],
+        [
+          2102,
+          7000
+        ]
+      ],
+      "candidate_binary_log_loss": 0.25584240706739225
+    },
+    "gaussian_naive_bayes": {
+      "correct": 7612,
+      "confident": 9118,
+      "eligible": 9102,
+      "prediction_seconds": 0.025317709000001187,
+      "top1_including_misses": 0.8348322000438693,
+      "conditional_top1": 0.8362997143484948,
+      "candidate_macro_f1": 0.85559018491768,
+      "candidate_positive_precision": 0.7450331125827815,
+      "candidate_positive_recall": 0.8157547791694133,
+      "candidate_confusion_matrix": [
+        [
+          29084,
+          2541
+        ],
+        [
+          1677,
+          7425
+        ]
+      ],
+      "candidate_binary_log_loss": 0.2752483728303715
+    },
+    "decision_tree": {
+      "correct": 7571,
+      "confident": 9118,
+      "eligible": 9102,
+      "prediction_seconds": 0.018720915999999477,
+      "top1_including_misses": 0.8303355999122615,
+      "conditional_top1": 0.8317952098439904,
+      "candidate_macro_f1": 0.8572394187639912,
+      "candidate_positive_precision": 0.7988846287905194,
+      "candidate_positive_recall": 0.7554383651944627,
+      "candidate_confusion_matrix": [
+        [
+          29894,
+          1731
+        ],
+        [
+          2226,
+          6876
+        ]
+      ],
+      "candidate_binary_log_loss": 0.2493573424065451
+    },
+    "random_forest": {
+      "correct": 7580,
+      "confident": 9118,
+      "eligible": 9102,
+      "prediction_seconds": 0.3282853329999931,
+      "top1_including_misses": 0.8313226584777363,
+      "conditional_top1": 0.8327840035157108,
+      "candidate_macro_f1": 0.8573508264601599,
+      "candidate_positive_precision": 0.7971332793896659,
+      "candidate_positive_recall": 0.7576356844649528,
+      "candidate_confusion_matrix": [
+        [
+          29870,
+          1755
+        ],
+        [
+          2206,
+          6896
+        ]
+      ],
+      "candidate_binary_log_loss": 0.24724102813896667
+    },
+    "hist_gradient_boosting": {
+      "correct": 7614,
+      "confident": 9118,
+      "eligible": 9102,
+      "prediction_seconds": 0.4630653339999995,
+      "top1_including_misses": 0.8350515463917526,
+      "conditional_top1": 0.8365194462755439,
+      "candidate_macro_f1": 0.8592597858474424,
+      "candidate_positive_precision": 0.8021377948181713,
+      "candidate_positive_recall": 0.7585146121731488,
+      "candidate_confusion_matrix": [
+        [
+          29922,
+          1703
+        ],
+        [
+          2198,
+          6904
+        ]
+      ],
+      "candidate_binary_log_loss": 0.2449829348437521
+    }
+  }
+}

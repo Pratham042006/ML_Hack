@@ -50,8 +50,13 @@ def compare_trip(
     candidates = candidate_generator(trip)
     if artifact is not None:
         if "heading_agreement" in artifact["feature_names"]:
-            from src.data.heading import add_heading_features
-            candidates = add_heading_features(trip, candidates)
+            from src.data.heading import HeadingConfig, add_heading_features
+            settings = artifact.get("heading_config", {"min_displacement_m": 5.0, "max_gap_seconds": 10.0})
+            if {'distance_margin_m', 'projection_fraction', 'candidate_rank', 'segment_length_m'} & set(artifact['feature_names']):
+                from src.data.candidate_features import add_candidate_features
+                candidates = add_candidate_features(trip, candidates, HeadingConfig(**settings))
+            else:
+                candidates = add_heading_features(trip, candidates, HeadingConfig(**settings))
     scored = score_candidates(candidates)
     shared_seconds = perf_counter() - started
 

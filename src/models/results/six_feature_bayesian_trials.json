@@ -1,0 +1,74 @@
+{
+  "scope": "training-trip CV, candidate-present approximate labels",
+  "objective": "mean candidate binary log loss",
+  "search": "Gaussian-process expected improvement",
+  "parameter": "max_leaf_nodes",
+  "range": [
+    7,
+    63
+  ],
+  "trials": [
+    {
+      "trial": 1,
+      "max_leaf_nodes": 7,
+      "fold_log_loss": [
+        0.2992903207433759,
+        0.15882557784992135,
+        0.14788130675970362
+      ],
+      "mean_log_loss": 0.20199906845100032
+    },
+    {
+      "trial": 2,
+      "max_leaf_nodes": 15,
+      "fold_log_loss": [
+        0.30632761905846373,
+        0.15930842795427724,
+        0.1461806002460719
+      ],
+      "mean_log_loss": 0.2039388824196043
+    },
+    {
+      "trial": 3,
+      "max_leaf_nodes": 31,
+      "fold_log_loss": [
+        0.3264884507568229,
+        0.15873082723498652,
+        0.14819779691558477
+      ],
+      "mean_log_loss": 0.2111390249691314
+    },
+    {
+      "trial": 4,
+      "max_leaf_nodes": 63,
+      "fold_log_loss": [
+        0.3266213391305845,
+        0.1646634584690858,
+        0.1529144291185772
+      ],
+      "mean_log_loss": 0.21473307557274915
+    },
+    {
+      "trial": 5,
+      "max_leaf_nodes": 47,
+      "fold_log_loss": [
+        0.3260221627443252,
+        0.15848739623915703,
+        0.14938690044870023
+      ],
+      "mean_log_loss": 0.2112988198107275
+    },
+    {
+      "trial": 6,
+      "max_leaf_nodes": 39,
+      "fold_log_loss": [
+        0.32151105764573445,
+        0.15940490659283696,
+        0.14799111224299075
+      ],
+      "mean_log_loss": 0.20963569216052072
+    }
+  ],
+  "best": 7,
+  "training_csv_sha256": "e935103ed1d03c1ac34ae5c14d6ea1b06898ab816153d1b1f3942f5eaeebe486"
+}

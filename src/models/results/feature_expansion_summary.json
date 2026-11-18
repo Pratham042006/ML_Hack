@@ -1,0 +1,110 @@
+{
+  "four": {
+    "cv": [
+      {
+        "model": "logistic_regression",
+        "top1_including_misses": 0.8015049299429164,
+        "conditional_top1": 0.8072182459604245,
+        "candidate_macro_f1_mean": 0.8577079781723546
+      },
+      {
+        "model": "gaussian_naive_bayes",
+        "top1_including_misses": 0.796791212592977,
+        "conditional_top1": 0.802470928122414,
+        "candidate_macro_f1_mean": 0.8022979210770859
+      },
+      {
+        "model": "decision_tree",
+        "top1_including_misses": 0.8041717119298852,
+        "conditional_top1": 0.809904037397831,
+        "candidate_macro_f1_mean": 0.8718274865098358
+      },
+      {
+        "model": "random_forest",
+        "top1_including_misses": 0.8069393991812258,
+        "conditional_top1": 0.8126914533761124,
+        "candidate_macro_f1_mean": 0.8731020392438312
+      },
+      {
+        "model": "hist_gradient_boosting",
+        "top1_including_misses": 0.8083809029579657,
+        "conditional_top1": 0.8141432325314674,
+        "candidate_macro_f1_mean": 0.8738948205459339
+      }
+    ],
+    "training_csv_sha256": "7144c29378ad2551474d5c5670abde961c1e28ffd5ce98fe6295f7a236b6fbf0",
+    "selected": "hist_gradient_boosting",
+    "student_projected": {
+      "classifier_only": {
+        "agreements": 7697,
+        "denominator": 9118,
+        "rate": 0.8441544198289098
+      },
+      "midpoint": {
+        "agreements": 6724,
+        "denominator": 9118,
+        "rate": 0.7374424215836807
+      },
+      "projected": {
+        "agreements": 7846,
+        "denominator": 9118,
+        "rate": 0.8604957227462163
+      }
+    },
+    "note": "Student-test is development data and proxy labels are inferred; not verified accuracy."
+  },
+  "six": {
+    "cv": [
+      {
+        "model": "logistic_regression",
+        "top1_including_misses": 0.8013175344519403,
+        "conditional_top1": 0.8070295146702283,
+        "candidate_macro_f1_mean": 0.8646148270379034
+      },
+      {
+        "model": "gaussian_naive_bayes",
+        "top1_including_misses": 0.7886178861788617,
+        "conditional_top1": 0.7942393403115519,
+        "candidate_macro_f1_mean": 0.7822519987021473
+      },
+      {
+        "model": "decision_tree",
+        "top1_including_misses": 0.8002796517326876,
+        "conditional_top1": 0.8059842336783728,
+        "candidate_macro_f1_mean": 0.8686645336664028
+      },
+      {
+        "model": "random_forest",
+        "top1_including_misses": 0.8066943435391801,
+        "conditional_top1": 0.8124446509197021,
+        "candidate_macro_f1_mean": 0.8694544762166028
+      },
+      {
+        "model": "hist_gradient_boosting",
+        "top1_including_misses": 0.808496223260105,
+        "conditional_top1": 0.8142593748638957,
+        "candidate_macro_f1_mean": 0.8706455512490353
+      }
+    ],
+    "training_csv_sha256": "e935103ed1d03c1ac34ae5c14d6ea1b06898ab816153d1b1f3942f5eaeebe486",
+    "selected": "hist_gradient_boosting",
+    "student_projected": {
+      "classifier_only": {
+        "agreements": 7659,
+        "denominator": 9118,
+        "rate": 0.839986839219127
+      },
+      "midpoint": {
+        "agreements": 6737,
+        "denominator": 9118,
+        "rate": 0.7388681728449221
+      },
+      "projected": {
+        "agreements": 7789,
+        "denominator": 9118,
+        "rate": 0.854244351831542
+      }
+    },
+    "note": "Student-test is development data and proxy labels are inferred; not verified accuracy."
+  }
+}

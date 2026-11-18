@@ -98,6 +98,8 @@ export default function App() {
           <div><span>Matched</span><b>{matched}</b></div>
           <div><span>Unmatched</span><b>{unmatched}</b></div>
           <div><span>Distinct segments</span><b>{segments}</b></div>
+          <div><span>Decoder resets</span><b>{(result.diagnostics?.events || []).filter((e) => e.event.endsWith("_reset")).length}</b></div>
+          <div><span>Decoder</span><b>{result.decoder || "not reported"}</b></div>
           <div>
             <span>Metrics</span>
             <b>{hasMetrics ? "" : "Not calculated"}</b>
@@ -112,6 +114,7 @@ export default function App() {
         </section>
       )}
 
+      {result && <p>Road segments are individual matches; intermediate roads are not displayed as a complete route.</p>}
       <MapView result={result} />
 
       {result && result.warnings.length > 0 && (

@@ -21,3 +21,5 @@ data/*
 outputs/
 *.log
 .DS_Store
+# Locally generated report and images may contain supplied GPS data
+output/

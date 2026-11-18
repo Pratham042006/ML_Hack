@@ -86,7 +86,7 @@ def main():
     best = max((r for r in summary if r['variant'] == 'distance_heading'), key=lambda r:r['top1_including_misses'])
     model = clone(templates[best['model']]).fit(data[['distance_m','heading_agreement']].to_numpy(), data.label.to_numpy())
     joblib.dump({'format_version': 1, 'feature_names': ['distance_m','heading_agreement'],
-                 'nullable_features': ['heading_agreement'], 'estimator': model,
+                 'nullable_features': ['heading_agreement'], 'heading_config': heading['config'], 'estimator': model,
                  'model_name': best['model'], 'training_csv_sha256': digest(a.csv),
                  'label_source': 'approximate_reference_alignment', 'verified_ground_truth': False},
                 a.output_dir/'provisional_heading_model.joblib')

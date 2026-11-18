@@ -15,7 +15,7 @@ import math
 from pathlib import Path
 from typing import Optional
 
-from src.api import mock_pipeline
+from src.api import config, mock_pipeline
 from src.api.evaluation import compute_metrics
 
 # component -> (module, function, parameter names the contract promises, in order)
@@ -109,6 +109,8 @@ def run_prediction(trip_dir: Path, model_artifact: Optional[str]) -> dict:
             "observations": _whitelist(observations, OBSERVATION_FIELDS),
             "predictions": _whitelist(predictions, PREDICTION_FIELDS),
             "metrics": {},
+            "diagnostics": {"events": [], "matched_blocks": []},
+            "decoder": "mock",
             "mode": "mock",
             "warnings": warnings,
         }
@@ -134,8 +136,16 @@ def run_prediction(trip_dir: Path, model_artifact: Optional[str]) -> dict:
             from src.models.inference import _load_artifact
             artifact = _load_artifact(model_artifact)
             if "heading_agreement" in artifact["feature_names"]:
-                from src.data.heading import add_heading_features
-                candidates = add_heading_features(trip, candidates)
+                from src.data.heading import HeadingConfig, add_heading_features
+                settings = artifact.get("heading_config")
+                if settings is None:
+                    warnings.append("Legacy heading model: using heading-v1 defaults (5 m, 10 s).")
+                    settings = {"min_displacement_m": 5.0, "max_gap_seconds": 10.0}
+                if {'distance_margin_m', 'projection_fraction', 'candidate_rank', 'segment_length_m'} & set(artifact['feature_names']):
+                    from src.data.candidate_features import add_candidate_features
+                    candidates = add_candidate_features(trip, candidates, HeadingConfig(**settings))
+                else:
+                    candidates = add_heading_features(trip, candidates, HeadingConfig(**settings))
     except Exception as exc:
         raise PipelineError(f"Candidate generation failed: {type(exc).__name__}: {exc}") from exc
 
@@ -150,20 +160,30 @@ def run_prediction(trip_dir: Path, model_artifact: Optional[str]) -> dict:
         raise PipelineError(f"Candidate scoring failed: {type(exc).__name__}: {exc}") from exc
 
     try:
-        predictions = components["decoder"](observations, scored, network)
+        from src.routing.decoder import decode_with_diagnostics
+        from src.routing.map_diagnostics import matched_blocks
+        if config.DECODER == "projected":
+            from src.data.candidate_projection import project_candidate_positions
+            from src.routing.projected import ProjectedDistance, decode_projected
+            positions = project_candidate_positions(trip, candidates)
+            predictions, events = decode_projected(observations, scored, network, distance=ProjectedDistance(positions))
+        elif config.DECODER == "midpoint":
+            predictions, events = decode_with_diagnostics(observations, scored, network)
+        else:
+            raise ValueError("PATHSNAP_DECODER must be midpoint or projected")
+        blocks = matched_blocks(predictions, events)
     except Exception as exc:
         raise PipelineError(f"Route decoding failed: {type(exc).__name__}: {exc}") from exc
     _validate(observations, predictions)
 
     mode = "trained" if model_artifact else "baseline"
-    warnings.append(
-        "The API does not verify how the decoder works; check the routing owner's notes to see "
-        "whether this is real Viterbi decoding or a fallback."
-    )
+    warnings.append("Predictions are matched segments; intermediate roads are not expanded.")
     return {
         "observations": _whitelist(observations, OBSERVATION_FIELDS),
         "predictions": _whitelist(predictions, PREDICTION_FIELDS),
         "metrics": compute_metrics(trip_dir.name, predictions),
+        "diagnostics": {"events": _clean(events), "matched_blocks": _clean(blocks)},
+        "decoder": config.DECODER,
         "mode": mode,
         "warnings": warnings,
     }

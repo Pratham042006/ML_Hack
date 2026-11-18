@@ -1,0 +1,63 @@
+{
+  "scope": "training-trip folds; candidate-present approximate labels only",
+  "csv_sha256": "e92667ea025e8b1bbb603a9292c05a1507cfe4015ae41b33282912434cf8fc56",
+  "results": [
+    {
+      "fold": 1,
+      "features": [
+        "distance_m",
+        "heading_agreement"
+      ],
+      "correct": 16205,
+      "observations": 22958
+    },
+    {
+      "fold": 1,
+      "features": [
+        "distance_m",
+        "heading_agreement",
+        "distance_margin_m"
+      ],
+      "correct": 16262,
+      "observations": 22958
+    },
+    {
+      "fold": 2,
+      "features": [
+        "distance_m",
+        "heading_agreement"
+      ],
+      "correct": 19277,
+      "observations": 22958
+    },
+    {
+      "fold": 2,
+      "features": [
+        "distance_m",
+        "heading_agreement",
+        "distance_margin_m"
+      ],
+      "correct": 19453,
+      "observations": 22958
+    },
+    {
+      "fold": 3,
+      "features": [
+        "distance_m",
+        "heading_agreement"
+      ],
+      "correct": 20001,
+      "observations": 22965
+    },
+    {
+      "fold": 3,
+      "features": [
+        "distance_m",
+        "heading_agreement",
+        "distance_margin_m"
+      ],
+      "correct": 20019,
+      "observations": 22965
+    }
+  ]
+}

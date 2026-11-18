@@ -1,0 +1,48 @@
+{
+  "scope": "training-trip CV on inferred candidate-present labels",
+  "training_csv_sha256": "e92667ea025e8b1bbb603a9292c05a1507cfe4015ae41b33282912434cf8fc56",
+  "results": [
+    {
+      "fold": 1,
+      "model": "untuned",
+      "max_leaf_nodes": 31,
+      "candidate_macro_f1": 0.7859037043715935,
+      "candidate_binary_log_loss": 0.3460077718317736
+    },
+    {
+      "fold": 1,
+      "model": "tuned",
+      "max_leaf_nodes": 15,
+      "candidate_macro_f1": 0.7848179406031233,
+      "candidate_binary_log_loss": 0.3457604819048955
+    },
+    {
+      "fold": 2,
+      "model": "untuned",
+      "max_leaf_nodes": 31,
+      "candidate_macro_f1": 0.8514765813390343,
+      "candidate_binary_log_loss": 0.21358687350567446
+    },
+    {
+      "fold": 2,
+      "model": "tuned",
+      "max_leaf_nodes": 15,
+      "candidate_macro_f1": 0.8590037079693476,
+      "candidate_binary_log_loss": 0.21338531569081529
+    },
+    {
+      "fold": 3,
+      "model": "untuned",
+      "max_leaf_nodes": 31,
+      "candidate_macro_f1": 0.8747350128020555,
+      "candidate_binary_log_loss": 0.21313450265988174
+    },
+    {
+      "fold": 3,
+      "model": "tuned",
+      "max_leaf_nodes": 15,
+      "candidate_macro_f1": 0.8749816319926867,
+      "candidate_binary_log_loss": 0.21280878166388825
+    }
+  ]
+}

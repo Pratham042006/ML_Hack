@@ -111,11 +111,52 @@ The three usable trips are preliminary proxy evidence, with no verified
 accuracy claim. The trained-model comparison can reuse the agreed
 position policy and frozen labels after the team selects an artifact.
 
+## Paired scorer comparison
+
+Once Pratham shares a selected artifact and Suhaas's matching inference
+features are available, run the same trip with both scorers:
+
+```powershell
+py -3.12 -m src.routing.projection_comparison "data/train/00000005" --model-artifact "artifacts/selected.joblib" --with-proxy
+```
+
+Use a trusted PathSnap v1 artifact and the model team's pinned dependency
+versions. The routing tool needs NumPy, and artifact scoring also needs
+joblib and the estimator's dependencies. Replace the two paths with your
+local paths. Omit `--with-proxy` for inference-only runs.
+
+The tool generates candidate IDs and directed positions once, scores the
+same list with each scorer, and runs classifier-only, midpoint Viterbi and
+projected Viterbi for both score sets. The JSON keeps baseline results under
+`runs` and artifact results under `model_comparison.runs`. It records the
+artifact SHA-256 and the number of changed matches versus the distance scorer
+for each decoder. Use the exact same output audit when comparing two scorers.
+If a feature is missing, the scorer raises an error naming that feature.
+
+For a feature provider still on a development branch, call
+`compare_trip(..., candidate_generator=team_candidate_generator)` with the
+team's actual inference implementation. It must supply the exact training
+feature names and missing-value policy. Use
+`position_provider=project_candidate_positions` to inject Suhaas's sidecar
+when that module is present. The command-line default uses the candidate
+generator on the checked-out branch. Heading feature engineering and its
+missing-value policy remain with the data and modeling teams.
+
+The artifact path was exercised with a synthetic two-feature
+LogisticRegression fixture, including candidate reuse, required-feature
+errors and matching proxy denominators. The 57 data, model and routing
+tests passed. The four real distance-only reruns reproduced the counts,
+pair audits, reset events, block boundaries and proxy results above.
+A real heading-model result remains pending the selected artifact and
+matching inference feature implementation.
+
 ## Map handoff for Prithika
 
 For either Viterbi mode the report includes `runs.<mode>.diagnostics.events`
 and `runs.<mode>.diagnostics.matched_blocks`. These use the same events and
 boundaries as the [existing routing handoff](DEVELOPMENT_RESULTS.md).
+For artifact scores, the equivalent fields are under
+`model_comparison.runs.<mode>.diagnostics`.
 Break before a reset observation and across an unmatched observation.
 Render the geometries as matched segments per observation. Even within a
 block, a transition may traverse intermediate arcs that are absent from

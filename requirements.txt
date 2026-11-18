@@ -1,0 +1,11 @@
+# Proposed starter set. Agree on any change in team chat; do not edit concurrently.
+numpy
+pandas
+scikit-learn
+pyproj
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+folium
+pytest

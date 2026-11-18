@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Node / UI
+node_modules/
+dist/
+
+# Secrets and local config
+.env
+
+# Dataset: never commit (check organizer permission first); evaluator labels must never be committed
+data/*
+!data/README.md
+
+# Big generated outputs (commit small result summaries manually if needed)
+outputs/
+*.log
+.DS_Store

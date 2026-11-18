@@ -20,7 +20,11 @@ from typing import Any
 
 from src.data.pipeline import generate_candidates, load_trip
 from src.models.inference import score_candidates
+from src.routing.continuity import audit_continuity
 from src.routing.decoder import (
+    DEFAULT_MAX_GAP_SECONDS,
+    DEFAULT_MAX_SPEED_MPS,
+    DirectedRoadGraph,
     decode_classifier_only,
     decode_with_diagnostics,
 )
@@ -70,7 +74,7 @@ def validate_pipeline_outputs(
         geometry = pred.get("geometry")
 
         if arc_id is None:
-            if geometry != []:
+            if "arc_id" not in pred or geometry != []:
                 checks["unmatched_outputs_have_null_arc_and_empty_geometry"] = False
                 errors.append(
                     f"Observation {obs_idx}: unmatched prediction must have geometry=[], got {geometry!r}"
@@ -111,6 +115,11 @@ def build_integration_report(
     total_observations = len(observations)
 
     validation_results = validate_pipeline_outputs(observations, candidates, predictions)
+    classifier_validation = validate_pipeline_outputs(
+        observations, candidates, classifier_predictions
+    )
+    validation_results["classifier_only"] = classifier_validation
+    validation_results["all_checks_passed"] &= classifier_validation["all_checks_passed"]
 
     matched_count = sum(1 for p in predictions if p.get("arc_id") is not None)
     unmatched_count = total_observations - matched_count
@@ -139,6 +148,34 @@ def build_integration_report(
             })
     difference_count = len(differences)
     agreement_rate = agreement_count / total_observations if total_observations > 0 else 0.0
+
+    classifier_matched = sum(p.get("arc_id") is not None for p in classifier_predictions)
+    continuity = None
+    if validation_results["all_checks_passed"]:
+        graph = DirectedRoadGraph(trip["network"])
+        baseline_counts, baseline_pairs = audit_continuity(observations, classifier_predictions, graph)
+        viterbi_counts, viterbi_pairs = audit_continuity(observations, predictions, graph)
+        continuity = {
+            "max_gap_seconds": DEFAULT_MAX_GAP_SECONDS,
+            "max_speed_mps": DEFAULT_MAX_SPEED_MPS,
+            "classifier_only": baseline_counts,
+            "viterbi": viterbi_counts,
+        }
+        scored_by_key = {(c["observation_index"], c["arc_id"]): c for c in scored}
+        following = dict(zip(
+            (o["observation_index"] for o in observations),
+            (o["observation_index"] for o in observations[1:]),
+        ))
+        for difference in differences[:10]:
+            index = difference["observation_index"]
+            for name, pairs in (("classifier", baseline_pairs), ("viterbi", viterbi_pairs)):
+                candidate = scored_by_key.get((index, difference[f"{name}_arc_id"]))
+                difference[name] = {
+                    "score": candidate["score"] if candidate else None,
+                    "gps_distance_m": candidate["features"]["distance_m"] if candidate else None,
+                    "incoming": pairs.get(index),
+                    "outgoing": pairs.get(following.get(index)),
+                }
 
     event_counts: dict[str, int] = {
         "missing_candidates": 0,
@@ -187,9 +224,12 @@ def build_integration_report(
             "generate_candidates_s": round(timings.get("generate_candidates_s", 0.0), 4),
             "score_candidates_s": round(timings.get("score_candidates_s", 0.0), 4),
             "decode_s": round(timings.get("decode_s", 0.0), 4),
+            "classifier_only_decode_s": round(timings.get("classifier_only_decode_s", 0.0), 4),
             "total_pipeline_s": round(timings.get("total_pipeline_s", 0.0), 4),
         },
         "classifier_vs_viterbi": {
+            "classifier_only_matched_observations": classifier_matched,
+            "classifier_only_unmatched_observations": total_observations - classifier_matched,
             "total_observations": total_observations,
             "agreement_count": agreement_count,
             "difference_count": difference_count,
@@ -200,7 +240,9 @@ def build_integration_report(
         "diagnostics": {
             "total_diagnostic_events": len(diagnostics),
             "event_breakdown": event_counts,
+            "events": diagnostics,
         },
+        "continuity": continuity,
     }
 
 
@@ -227,9 +269,11 @@ def run_integration_demo(trip_path: str | Path) -> dict[str, Any]:
     )
     t_decode = time.perf_counter() - t_decode_start
 
+    t_classifier_start = time.perf_counter()
     classifier_predictions = decode_classifier_only(
         trip["observations"], scored, trip["network"]
     )
+    t_classifier = time.perf_counter() - t_classifier_start
     t_total = time.perf_counter() - t0
 
     timings = {
@@ -237,6 +281,7 @@ def run_integration_demo(trip_path: str | Path) -> dict[str, Any]:
         "generate_candidates_s": t_cands,
         "score_candidates_s": t_score,
         "decode_s": t_decode,
+        "classifier_only_decode_s": t_classifier,
         "total_pipeline_s": t_total,
     }
 

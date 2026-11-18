@@ -94,6 +94,7 @@ class DirectedRoadGraph:
             self._adjacency[from_node].append((to_node, length_m))
 
         self._distance_cache: dict[tuple[int, int], float] = {}
+        self._search_cutoffs: dict[tuple[int, int], float] = {}
 
     def validate_arc_id(self, arc_id: Any) -> int:
         if isinstance(arc_id, bool) or not isinstance(arc_id, int):
@@ -106,12 +107,18 @@ class DirectedRoadGraph:
         arc = self.arcs[arc_id]
         return [list(self.nodes[arc.from_node]), list(self.nodes[arc.to_node])]
 
-    def shortest_node_distance_m(self, source: int, target: int) -> float:
+    def shortest_node_distance_m(
+        self, source: int, target: int, *, limit_m: float = math.inf
+    ) -> float:
+        """Return infinity when no directed path fits within the search limit."""
         if source == target:
-            return 0.0
+            return 0.0 if limit_m >= 0.0 else math.inf
         key = (source, target)
         if key in self._distance_cache:
-            return self._distance_cache[key]
+            distance = self._distance_cache[key]
+            return distance if distance <= limit_m else math.inf
+        if key in self._search_cutoffs and limit_m <= self._search_cutoffs[key]:
+            return math.inf
 
         distances = {source: 0.0}
         queue = [(0.0, source)]
@@ -119,6 +126,9 @@ class DirectedRoadGraph:
             distance, node = heapq.heappop(queue)
             if distance != distances.get(node):
                 continue
+            if distance > limit_m:
+                self._search_cutoffs[key] = limit_m
+                return math.inf
             if node == target:
                 self._distance_cache[key] = distance
                 return distance
@@ -131,7 +141,9 @@ class DirectedRoadGraph:
         self._distance_cache[key] = math.inf
         return math.inf
 
-    def candidate_travel_distance_m(self, previous_arc_id: int, arc_id: int) -> float:
+    def candidate_travel_distance_m(
+        self, previous_arc_id: int, arc_id: int, *, limit_m: float = math.inf
+    ) -> float:
         """Approximate directed travel between candidate-segment midpoints.
 
         Staying on the same directed arc costs zero because the candidate
@@ -146,12 +158,16 @@ class DirectedRoadGraph:
             return 0.0
         previous = self.arcs[previous_arc_id]
         current = self.arcs[arc_id]
+        previous_half = previous.length_m / 2.0
+        current_half = current.length_m / 2.0
+        if previous_half + current_half > limit_m:
+            return math.inf
         between = self.shortest_node_distance_m(
-            previous.to_node, current.from_node
+            previous.to_node, current.from_node, limit_m=limit_m - previous_half - current_half
         )
         if not math.isfinite(between):
             return math.inf
-        return previous.length_m / 2.0 + between + current.length_m / 2.0
+        return previous_half + between + current_half
 
 
 def _validate_observations(
@@ -294,8 +310,11 @@ def _transition_log_probability(
     delta_seconds: float,
     max_speed_mps: float,
 ) -> float:
+    max_travel_m = max_speed_mps * delta_seconds
+    # Allow for rounding in the bound; the original speed check is authoritative.
+    search_limit_m = max_travel_m + max(1.0, max_travel_m) * 1e-12
     network_distance = graph.candidate_travel_distance_m(
-        previous_candidate["arc_id"], candidate["arc_id"]
+        previous_candidate["arc_id"], candidate["arc_id"], limit_m=search_limit_m
     )
     if not math.isfinite(network_distance):
         return -math.inf

@@ -69,9 +69,9 @@ It also runs `decode_classifier_only(...)` to compare the independent choices wi
 
 - **Coverage (not accuracy)**: Matched and unmatched observation counts and coverage rate.
 - **Candidate counts**: Total candidates, scored candidates, observations with/without candidates, and per-observation statistics.
-- **Timings**: Elapsed seconds for trip loading, candidate generation, candidate scoring, and decoding.
-- **Classifier-only vs. Viterbi**: Agreement rate, difference count, and breakdown of observations where independent argmax and Viterbi sequence decoding differ.
-- **Diagnostics**: Aggregate event counts for missing candidates, large gap resets, unreachable transition resets, non-positive timestamps, and uniform emission fallbacks.
+- **Timings**: Elapsed seconds for trip loading, candidate generation, candidate scoring, and each decoder. The pipeline total stops before the audit and JSON serialization.
+- **Classifier-only vs. Viterbi**: Per-method coverage, adjacent-pair continuity counts, and example changes with GPS distance, score, and neighboring transition status.
+- **Diagnostics**: Event counts and individual events with observation indices. See [development results and handoff](DEVELOPMENT_RESULTS.md) for the map instructions and offline proxy evaluation.
 
 ### Limitations and explicit disclaimers
 
@@ -108,6 +108,7 @@ approximation:
 Staying on the same directed arc has distance zero. Reverse travel is not silently
 allowed: it requires a separate reverse directed arc and a reachable directed turn.
 The transition log score penalizes disagreement between this road distance and the
-straight-line GPS displacement, and rejects implausible speed. This approximation
-should be replaced with projected fractions when Person 1 exposes them in the
-agreed contract.
+straight-line GPS displacement, and rejects implausible speed. The decoder bounds
+shortest-path searches by the existing speed cap times elapsed time. The separate
+continuity audit uses unrestricted paths so it can distinguish a disconnected pair
+from a reachable pair whose estimated trip is too fast.

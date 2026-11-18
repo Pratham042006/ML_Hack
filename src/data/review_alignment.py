@@ -89,6 +89,27 @@ def _sensitivity(trip, candidates):
     return results, baseline["labels"]
 
 
+def _distant_diagnostics(trip, labels):
+    distant = [label for label in labels
+               if "distant_from_aligned_route_segment" in label["reasons"]]
+    if not distant:
+        return {"distant_selected": 0, "any_reference_within_50m": 0,
+                "no_inference_candidates": 0}
+    nodes, arcs = trip["network"]["nodes"], trip["network"]["arcs"]
+    observations = trip["observations"]
+    xy = _project_local(nodes + [[o["longitude"], o["latitude"]] for o in observations])
+    points = {o["observation_index"]: point for o, point in zip(observations, xy[len(nodes):])}
+    starts, ends = np.asarray([arcs[arc] for arc in trip["reference_route"]]).T
+    reference_starts, reference_ends = xy[starts], xy[ends]
+    near = sum(
+        float(_point_segment_distances(points[label["observation_index"]],
+                                       reference_starts, reference_ends).min()) <= 50
+        for label in distant
+    )
+    return {"distant_selected": len(distant), "any_reference_within_50m": near,
+            "no_inference_candidates": sum(label["candidate_count"] == 0 for label in distant)}
+
+
 def _parallel_candidate(trip, label, candidates):
     if label["arc_id"] is None:
         return None
@@ -154,7 +175,7 @@ def _write_map(path, trip, label, nearby):
         + "".join(parts) + "</svg></html>", encoding="utf-8")
 
 
-def review(training_root, prepared_dir, output_dir):
+def review(training_root, prepared_dir, output_dir, *, all_sections=False, uncertainty_trips=()):
     root, prepared, output = map(Path, (training_root, prepared_dir, output_dir))
     output.mkdir(parents=True, exist_ok=True)
     manifest = json.loads((prepared / "manifest.json").read_text(encoding="utf-8"))
@@ -176,9 +197,18 @@ def review(training_root, prepared_dir, output_dir):
         if breaks:
             by_reason["disconnected_trips"] += 1
             report["disconnected_references"][trip_id] = {"break_positions": breaks}
-            if trip_id == "00000002":
+            if all_sections or trip_id == "00000002":
                 report["disconnected_references"][trip_id] = section_evidence(trip)
     report["disconnected_trip_count"] = by_reason["disconnected_trips"]
+    report["distant_alignment_diagnostics"] = {}
+    training_ids = {trip["trip_id"] for trip in manifest["trips"] if trip["status"] != "failed"}
+    for trip_id in uncertainty_trips:
+        if trip_id not in training_ids:
+            raise ValueError(f"Trip {trip_id} is not a processed training trip")
+        trip = load_trip(root / trip_id, include_reference=True)
+        changes, labels = _sensitivity(trip, generate_candidates(trip))
+        report["sensitivity"][trip_id] = changes
+        report["distant_alignment_diagnostics"][trip_id] = _distant_diagnostics(trip, labels)
 
     found = set()
     for trip_id in ("00000001", "00000003", "00000018", "00000008", "00000090", "00000095"):
@@ -227,7 +257,12 @@ if __name__ == "__main__":
     parser.add_argument("training_root")
     parser.add_argument("prepared_dir")
     parser.add_argument("output_dir")
+    parser.add_argument("--all-sections", action="store_true",
+                        help="Run exploratory section fits for every disconnected reference")
+    parser.add_argument("--uncertainty-trip", action="append", default=[], metavar="TRIP_ID",
+                        help="Add threshold and distant-observation diagnostics for a training trip")
     args = parser.parse_args()
-    result = review(args.training_root, args.prepared_dir, args.output_dir)
+    result = review(args.training_root, args.prepared_dir, args.output_dir,
+                    all_sections=args.all_sections, uncertainty_trips=args.uncertainty_trip)
     print(json.dumps({"disconnected_trip_count": result["disconnected_trip_count"],
                       "cases": [case["case"] for case in result["cases"]]}, indent=2))

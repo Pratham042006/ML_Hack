@@ -130,6 +130,9 @@ investigation and evaluation-denominator rules. The separate approximate aligner
 now exports qualified labels and an optional training CSV with provenance;
 labels never enter inference. Details and counts are in `LABEL_ALIGNMENT.md`.
 
+The full 80-trip training and separate 10-trip student-test batch, output
+schema, hashes and diagnostic commands are in `REVIEW2_HANDOFF.md`.
+
 Remaining data work: validate remaining permitted training trips, inspect
 connectivity/EDA, investigate candidate radius/coverage and projection error,
 and validate/refine approximate reference alignment. No claim of full-dataset readiness.

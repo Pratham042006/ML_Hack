@@ -2,7 +2,7 @@
 
 import argparse
 from collections import Counter
-from hashlib import file_digest
+from hashlib import sha256
 import json
 from pathlib import Path
 from time import perf_counter
@@ -66,7 +66,10 @@ def compare_trip(
     trained_predictions = None
     if artifact_path is not None:
         with artifact_path.open("rb") as stream:
-            artifact_hash = file_digest(stream, "sha256").hexdigest()
+            digest = sha256()
+            for block in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(block)
+            artifact_hash = digest.hexdigest()
         started = perf_counter()
         artifact_scored = score_candidates(candidates, model_artifact=artifact_path)
         artifact_seconds = perf_counter() - started

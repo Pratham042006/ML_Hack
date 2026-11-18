@@ -69,3 +69,13 @@ class TripHeading:
         # The dot product of unit directions is cos(GPS heading - road heading).
         # It works across north without subtracting wrapped angles.
         return min(1.0, max(-1.0, float(np.dot(gps, road / length)))), None
+
+
+def add_heading_features(trip, candidates, config=HeadingConfig()):
+    """Copy candidates, including explicit None where heading is unavailable."""
+    if not candidates:
+        return []
+    heading = TripHeading(trip, config)
+    return [{**candidate, 'features': {**candidate['features'],
+             'heading_agreement': heading.agreement(candidate['observation_index'], candidate['arc_id'])[0]}}
+            for candidate in candidates]

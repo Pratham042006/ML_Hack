@@ -130,6 +130,12 @@ def run_prediction(trip_dir: Path, model_artifact: Optional[str]) -> dict:
 
     try:
         candidates = components["candidates"](trip)
+        if model_artifact:
+            from src.models.inference import _load_artifact
+            artifact = _load_artifact(model_artifact)
+            if "heading_agreement" in artifact["feature_names"]:
+                from src.data.heading import add_heading_features
+                candidates = add_heading_features(trip, candidates)
     except Exception as exc:
         raise PipelineError(f"Candidate generation failed: {type(exc).__name__}: {exc}") from exc
 

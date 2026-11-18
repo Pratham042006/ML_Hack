@@ -81,7 +81,12 @@ def score_candidates(candidates, model_artifact=None):
             features = candidate["features"]
             row = []
             for name in feature_names:
-                value = features.get(name)
+                if name not in features:
+                    raise ValueError(f"Missing or invalid required model feature: {name}")
+                value = features[name]
+                if value is None and name in artifact.get("nullable_features", []):
+                    row.append(float("nan"))
+                    continue
                 if isinstance(value, bool) or not isinstance(value, Real) or not math.isfinite(value):
                     raise ValueError(f"Missing or invalid required model feature: {name}")
                 row.append(float(value))

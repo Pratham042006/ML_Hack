@@ -40,6 +40,12 @@ def compare_trip(
     trip = load_trip(path, include_reference=False)
     observations, network = trip["observations"], trip["network"]
     candidates = candidate_generator(trip)
+    if artifact_path is not None:
+        from src.models.inference import _load_artifact
+        artifact = _load_artifact(artifact_path)
+        if "heading_agreement" in artifact["feature_names"]:
+            from src.data.heading import add_heading_features
+            candidates = add_heading_features(trip, candidates)
     scored = score_candidates(candidates)
     shared_seconds = perf_counter() - started
 

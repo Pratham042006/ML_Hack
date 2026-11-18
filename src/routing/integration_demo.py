@@ -21,7 +21,6 @@ from typing import Any
 from src.data.pipeline import generate_candidates, load_trip
 from src.models.inference import score_candidates
 from src.routing.decoder import (
-    decode,
     decode_classifier_only,
     decode_with_diagnostics,
 )
@@ -223,13 +222,12 @@ def run_integration_demo(trip_path: str | Path) -> dict[str, Any]:
     t_score = time.perf_counter() - t_score_start
 
     t_decode_start = time.perf_counter()
-    predictions = decode(trip["observations"], scored, trip["network"])
+    predictions, diagnostics = decode_with_diagnostics(
+        trip["observations"], scored, trip["network"]
+    )
     t_decode = time.perf_counter() - t_decode_start
 
     classifier_predictions = decode_classifier_only(
-        trip["observations"], scored, trip["network"]
-    )
-    _, diagnostics = decode_with_diagnostics(
         trip["observations"], scored, trip["network"]
     )
     t_total = time.perf_counter() - t0

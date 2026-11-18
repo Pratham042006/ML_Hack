@@ -1,0 +1,77 @@
+{
+  "date": "2026-11-18",
+  "scope": "Three real training trips only; no evaluator trips accessed",
+  "method_version": "monotone-reference-v1",
+  "verified_ground_truth": false,
+  "unit_tests_passed": 19,
+  "csv_ledger_provenance_checks": "passed",
+  "trips": [
+    {
+      "trip_id": "00000001",
+      "partition": "training",
+      "counts": {
+        "total_observations": 1315,
+        "confident": 652,
+        "ambiguous": 663,
+        "unavailable": 0,
+        "candidate_misses": 0,
+        "no_candidates_all_observations": 0,
+        "training_eligible": 652,
+        "candidate_miss_denominator": 652,
+        "candidate_miss_rate": 0.0
+      },
+      "reason_counts": {
+        "multiple_plausible_route_positions": 663,
+        "adjacent_large_gps_gap": 2
+      },
+      "reference_entries": 525,
+      "best_path_cost": 133.04794376120006,
+      "label_source": "approximate_reference_alignment",
+      "verified_ground_truth": false
+    },
+    {
+      "trip_id": "00000002",
+      "partition": "training",
+      "counts": {
+        "total_observations": 7243,
+        "confident": 0,
+        "ambiguous": 0,
+        "unavailable": 7243,
+        "candidate_misses": 0,
+        "no_candidates_all_observations": 510,
+        "training_eligible": 0,
+        "candidate_miss_denominator": 0,
+        "candidate_miss_rate": null
+      },
+      "reason_counts": {
+        "disconnected_or_direction_inconsistent_reference": 7243
+      },
+      "reference_entries": 262,
+      "best_path_cost": null,
+      "label_source": "approximate_reference_alignment",
+      "verified_ground_truth": false
+    },
+    {
+      "trip_id": "00000003",
+      "partition": "training",
+      "counts": {
+        "total_observations": 821,
+        "confident": 536,
+        "ambiguous": 285,
+        "unavailable": 0,
+        "candidate_misses": 2,
+        "no_candidates_all_observations": 0,
+        "training_eligible": 534,
+        "candidate_miss_denominator": 536,
+        "candidate_miss_rate": 0.0037313432835820895
+      },
+      "reason_counts": {
+        "multiple_plausible_route_positions": 285
+      },
+      "reference_entries": 79,
+      "best_path_cost": 100.70914668501753,
+      "label_source": "approximate_reference_alignment",
+      "verified_ground_truth": false
+    }
+  ]
+}

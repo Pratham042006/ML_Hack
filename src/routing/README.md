@@ -115,3 +115,5 @@ from a reachable pair whose estimated trip is too fast.
 
 See the [projection comparison](PROJECTION_COMPARISON.md) for the opt-in
 position-aware prototype, four-trip comparison, and map handoff.
+The [student-test evaluation](STUDENT_TEST_EVALUATION.md) records the frozen
+ten-trip comparison, paired artifact checks, and reference-free map preview.
